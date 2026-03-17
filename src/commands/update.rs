@@ -4,11 +4,12 @@ use std::str::FromStr;
 
 use crate::cli::UpdateCommand;
 use crate::config::DB_PATH;
+use crate::config::db_exists;
 
 async fn update_password(
     conn: &mut SqliteConnection,
     old_name: String,
-    new_name: String
+    new_name: String,
 ) -> anyhow::Result<SqliteQueryResult> {
     conn.transaction(|tx| {
         Box::pin(async move {
@@ -29,8 +30,12 @@ async fn update_password(
     .map_err(|e| e.into())
 }
 
-
-pub async fn update (cmd: UpdateCommand) {
+pub async fn update(cmd: UpdateCommand) {
+    if !db_exists() {
+        println!("Database not found, run command 'create' first");
+        return;
+    }
+    
     let mut conn = SqliteConnectOptions::from_str(&DB_PATH)
         .unwrap()
         .pragma("key", cmd.password)
@@ -42,11 +47,14 @@ pub async fn update (cmd: UpdateCommand) {
 
     match update {
         Ok(_) => {
-            println!("{} updated to: {} successfully!", cmd.old_name.clone(), cmd.new_name.clone())
-        },
+            println!(
+                "{} updated to: {} successfully!",
+                cmd.old_name.clone(),
+                cmd.new_name.clone()
+            )
+        }
         Err(e) => {
             println!("Error in updated password: {}", e)
         }
     }
-
 }

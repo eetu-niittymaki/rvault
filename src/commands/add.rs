@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use crate::cli::AddCommand;
 use crate::config::DB_PATH;
+use crate::config::db_exists;
 
 async fn add_password(
     conn: &mut SqliteConnection,
@@ -29,6 +30,11 @@ async fn add_password(
 }
 
 pub async fn add(cmd: AddCommand) {
+    if !db_exists() {
+        println!("Database not found, run command 'create' first");
+        return;
+    }
+
     let mut conn = SqliteConnectOptions::from_str(&DB_PATH)
         .unwrap()
         .pragma("key", cmd.password)
@@ -41,7 +47,7 @@ pub async fn add(cmd: AddCommand) {
     match add {
         Ok(_) => {
             println!("{} added successfully!", cmd.name.clone())
-        },
+        }
         Err(e) => {
             println!("Error in adding password: {}", e)
         }

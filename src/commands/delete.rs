@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use crate::cli::DeleteCommand;
 use crate::config::DB_PATH;
+use crate::config::db_exists;
 
 async fn delete_password(
     conn: &mut SqliteConnection,
@@ -26,7 +27,12 @@ async fn delete_password(
     .map_err(|e| e.into())
 }
 
-pub async fn delete (cmd: DeleteCommand) {
+pub async fn delete(cmd: DeleteCommand) {
+    if !db_exists() {
+        println!("Database not found, run command 'create' first");
+        return;
+    }
+
     let mut conn = SqliteConnectOptions::from_str(&DB_PATH)
         .unwrap()
         .pragma("key", cmd.password)
@@ -39,7 +45,7 @@ pub async fn delete (cmd: DeleteCommand) {
     match delete {
         Ok(_) => {
             println!("{} deleted successfully!", cmd.name.clone())
-        },
+        }
         Err(e) => {
             println!("Error in deleting password: {}", e)
         }
