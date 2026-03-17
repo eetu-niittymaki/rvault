@@ -3,6 +3,7 @@ use sqlx::sqlite::SqliteRow;
 
 use crate::cli::AllCommand;
 
+
 async fn get_all(pool: &SqlitePool) -> anyhow::Result<Vec<SqliteRow>> {
     let results = query("SELECT * FROM Passwords;")
         .fetch_all(pool)
@@ -15,13 +16,12 @@ pub async fn all(_cmd: AllCommand, pool: &SqlitePool) {
     match get_all(pool).await {
         Ok(rows) => {
             if !rows.is_empty() {
-                println!("Name: Password");
-                println!("--------------");
+                println!("Saved Passwords");
+                println!("---------------");
                 for row in rows {
                     let name: String = row.try_get("name").unwrap_or_else(|_| "Unknown".to_string());
-                    let pass: String = row.try_get("password").unwrap_or_default();
 
-                    println!("{}: {}", name, pass);
+                    println!("{}", name);
                 }
             } else {
                 println!("No passwords saved");

@@ -6,6 +6,7 @@ mod cli;
 mod commands;
 mod config;
 mod db;
+mod crypto;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

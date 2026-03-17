@@ -14,6 +14,8 @@ rpassword = "7.4.0"
 libsqlite3-sys = { version = "0.30.1", features = [
     "bundled-sqlcipher"
 ] }
+base64 = "0.22.1"
+dotenv = "0.15"
 
 
 [dependencies.sqlx]

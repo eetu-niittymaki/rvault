@@ -9,9 +9,8 @@ async fn delete_password(
 ) -> anyhow::Result<SqliteQueryResult> {
     let result = query(
         r#"
-        UPDATE Passwords
-        SET name = ?
-        WHERE name = ?;
+        DELETE FROM  Passwords
+        WHERE name = ?
         "#,
     )
     .bind(name)
