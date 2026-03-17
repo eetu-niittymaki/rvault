@@ -1,0 +1,1 @@
+pub const DB_PATH: &str = ".passwords.sqlite3";
