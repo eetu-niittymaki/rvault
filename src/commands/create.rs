@@ -1,63 +1,70 @@
-use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult};
-use sqlx::{ConnectOptions, SqliteConnection, query};
+use sqlx::{query, SqliteConnection, SqlitePool};
+use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult,};
 use std::path::Path;
 use std::str::FromStr;
-use std::{fs, io};
+use std::{fs, io, io::Write};
 
-use crate::cli::CreateCommand;
+use rpassword::read_password; 
+
 use crate::config::DB_PATH;
 
-async fn create_encrypted_database(database_path: &str, password: &str) -> anyhow::Result<()> {
-    let _ = SqliteConnectOptions::from_str(&database_path)?
-        .pragma("key", password.to_owned())
-        .create_if_missing(true)
-        .connect()
-        .await?;
+pub async fn create() -> anyhow::Result<SqlitePool> {
+    // Check if DB exists
+    if Path::new(DB_PATH).exists() {
+        println!("Database already exists. Delete and create new? [y/n]");
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+        if !matches!(input.trim().to_lowercase().as_str(), "y" | "yes") {
+            println!("Database creation cancelled.");
+            std::process::exit(0);
+        }
 
-    Ok(())
+        fs::remove_file(DB_PATH)?;
+    }
+
+    let password = prompt_password();
+
+    let opts = SqliteConnectOptions::from_str(DB_PATH)?
+        .pragma("key", password)
+        .create_if_missing(true);
+
+    let pool = SqlitePool::connect_with(opts).await?;
+
+    let mut conn = pool.acquire().await?;
+    create_table(&mut conn).await?;
+
+    println!("Database created successfully!");
+    Ok(pool)
+}
+
+fn prompt_password() -> String {
+    print!("Enter database password: ");
+    io::stdout().flush().unwrap();
+    let password = read_password().unwrap();
+
+    print!("Confirm password: ");
+    io::stdout().flush().unwrap();
+    let password_confirm = read_password().unwrap();
+
+    if password != password_confirm {
+        eprintln!("Passwords do not match!");
+        std::process::exit(1);
+    }
+
+    password
 }
 
 async fn create_table(conn: &mut SqliteConnection) -> anyhow::Result<SqliteQueryResult> {
     query(
-        "CREATE TABLE IF NOT EXISTS Passwords(
+        r#"
+        CREATE TABLE IF NOT EXISTS Passwords(
             id       INTEGER PRIMARY KEY NOT NULL,
             name     TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL UNIQUE
-        );",
+        );
+        "#
     )
     .execute(conn)
     .await
     .map_err(Into::into)
-}
-
-pub async fn create(cmd: CreateCommand) {
-    let db_path = Path::new(DB_PATH);
-
-    if db_path.exists() {
-        let mut input = String::new();
-        println!("Database already exists, delete and create new [y/n]?");
-        println!("Deleting will destroy all saved data!");
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-
-        match input.trim().to_lowercase().as_str() {
-            "y" | "yes" => {
-                fs::remove_file(db_path).unwrap();
-            }
-            _ => return,
-        }
-    }
-
-    let _ = create_encrypted_database(&DB_PATH, &cmd.password).await;
-    let mut conn = SqliteConnectOptions::from_str(&DB_PATH)
-        .unwrap()
-        .pragma("key", cmd.password)
-        .create_if_missing(true)
-        .connect()
-        .await
-        .unwrap();
-
-    let _ = create_table(&mut conn).await;
-    println!("Database created!")
 }

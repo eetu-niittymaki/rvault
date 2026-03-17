@@ -12,53 +12,44 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     Create(CreateCommand),
-    Add(AddCommand),
+    New(NewCommand),
     Update(UpdateCommand),
     Delete(DeleteCommand),
-    All(AllCommand)
+    All(AllCommand),
+    Get(GetCommand)
 }
 
-#[derive(Parser)]
-#[derive(Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct CreateCommand {
-    #[arg(short, long, help="Password for vault")]
-    pub password: String,
 }
 
-#[derive(Parser)]
-#[derive(Debug)]
-pub struct AddCommand {
-    #[arg(short, long, help="Password for vault")]
-    pub password: String,
+#[derive(Parser, Debug, Clone)]
+pub struct NewCommand {
     #[arg(short, long, help="Name for password to create")]
     pub name: String,
     #[arg(short, long, help="Password")]
     pub word: String
 }
 
-#[derive(Parser)]
-#[derive(Debug)]
-pub struct UpdateCommand {
-    #[arg(short, long, help="Password for vault")]
-    pub password: String,
+#[derive(Parser, Debug, Clone)]pub struct UpdateCommand {
     #[arg(short, long, help="Name for password to change")]
     pub old_name: String,
     #[arg(short, long, help="Name password is changed to")]
     pub new_name: String,
 }
 
-#[derive(Parser)]
-#[derive(Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct DeleteCommand {
-    #[arg(short, long, help="Password for vault")]
-    pub password: String,
     #[arg(short, long, help="Name for password to delete")]
     pub name: String,
 }
 
-#[derive(Parser)]
-#[derive(Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct AllCommand {
-    #[arg(short, long, help="Password for vault")]
-    pub password: String,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct GetCommand {
+    #[arg(short, long, help="Name for password to get")]
+    pub name: String,
 }

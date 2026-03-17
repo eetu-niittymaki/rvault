@@ -1,60 +1,52 @@
-use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult};
-use sqlx::{ConnectOptions, Connection, SqliteConnection, query};
-use std::str::FromStr;
+use sqlx::sqlite::SqliteQueryResult;
+use sqlx::{SqliteConnection, query, SqlitePool};
 
 use crate::cli::UpdateCommand;
-use crate::config::DB_PATH;
-use crate::config::db_exists;
 
 async fn update_password(
     conn: &mut SqliteConnection,
     old_name: String,
     new_name: String,
 ) -> anyhow::Result<SqliteQueryResult> {
-    conn.transaction(|tx| {
-        Box::pin(async move {
-            query(
-                r#"
-                    UPDATE Passwords 
-                    SET name = ?
-                    WHERE name = ?;
-                    "#,
-            )
-            .bind(new_name)
-            .bind(old_name)
-            .execute(&mut **tx)
-            .await
-        })
-    })
-    .await
-    .map_err(|e| e.into())
+    let result = query(
+        r#"
+        UPDATE Passwords
+        SET name = ?
+        WHERE name = ?;
+        "#,
+    )
+    .bind(new_name)
+    .bind(old_name)
+    .execute(conn)  
+    .await?;
+
+    Ok(result)
 }
 
-pub async fn update(cmd: UpdateCommand) {
-    if !db_exists() {
-        println!("Database not found, run command 'create' first");
-        return;
-    }
-    
-    let mut conn = SqliteConnectOptions::from_str(&DB_PATH)
-        .unwrap()
-        .pragma("key", cmd.password)
-        .connect()
-        .await
-        .unwrap();
+pub async fn update(cmd: UpdateCommand, pool: &SqlitePool) {
+    let mut conn = match pool.acquire().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            println!("Failed to acquire DB connection: {}", e);
+            return;
+        }
+    };
 
-    let update = update_password(&mut conn, cmd.old_name.clone(), cmd.new_name.clone()).await;
+    let result = update_password(
+        &mut conn, 
+        cmd.old_name.clone(), 
+        cmd.new_name.clone(),
+    ).await;
 
-    match update {
+    match result {
         Ok(_) => {
             println!(
                 "{} updated to: {} successfully!",
-                cmd.old_name.clone(),
-                cmd.new_name.clone()
-            )
+                cmd.old_name, cmd.new_name
+            );
         }
         Err(e) => {
-            println!("Error in updated password: {}", e)
+            println!("Error updating password: {}", e);
         }
     }
 }

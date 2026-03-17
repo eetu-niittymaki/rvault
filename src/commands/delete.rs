@@ -1,44 +1,34 @@
-use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult};
-use sqlx::{ConnectOptions, Connection, SqliteConnection, query};
-use std::str::FromStr;
+use sqlx::sqlite::{SqliteQueryResult};
+use sqlx::{SqliteConnection, query, SqlitePool};
 
 use crate::cli::DeleteCommand;
-use crate::config::DB_PATH;
-use crate::config::db_exists;
 
 async fn delete_password(
     conn: &mut SqliteConnection,
     name: String,
 ) -> anyhow::Result<SqliteQueryResult> {
-    conn.transaction(|tx| {
-        Box::pin(async move {
-            query(
-                r#"
-                    DELETE FROM Passwords 
-                    WHERE name = ?;
-                    "#,
-            )
-            .bind(name)
-            .execute(&mut **tx)
-            .await
-        })
-    })
-    .await
-    .map_err(|e| e.into())
+    let result = query(
+        r#"
+        UPDATE Passwords
+        SET name = ?
+        WHERE name = ?;
+        "#,
+    )
+    .bind(name)
+    .execute(conn)  
+    .await?;
+
+    Ok(result)
 }
 
-pub async fn delete(cmd: DeleteCommand) {
-    if !db_exists() {
-        println!("Database not found, run command 'create' first");
-        return;
-    }
-
-    let mut conn = SqliteConnectOptions::from_str(&DB_PATH)
-        .unwrap()
-        .pragma("key", cmd.password)
-        .connect()
-        .await
-        .unwrap();
+pub async fn delete(cmd: DeleteCommand, pool: &SqlitePool) {
+    let mut conn = match pool.acquire().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            println!("Failed to acquire DB connection: {}", e);
+            return;
+        }
+    };
 
     let delete = delete_password(&mut conn, cmd.name.clone()).await;
 
