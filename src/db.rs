@@ -29,6 +29,7 @@ pub async fn connect(db_path: &Path) -> Result<SqlitePool, Error> {
             if let Error::Database(db_err) = &e {
                 if db_err.message().contains("file is not a database") {
                     println!("Incorrect password for database");
+                    std::process::exit(0);
                 }
             }
             Err(e)
