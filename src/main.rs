@@ -1,6 +1,6 @@
 use clap::Parser;
 use cli::{Cli, Commands};
-use crate::config::{DB_PATH, db_exists};
+use crate::config::get_db_path;
 
 mod cli;
 mod commands;
@@ -12,34 +12,35 @@ mod utils;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+    let db = get_db_path();
 
     match &cli.command {
         Some(Commands::Create(_)) => {
             let _pool = commands::create::create().await?;
         }
         Some(Commands::New(cmd)) => {
-            ensure_db_exists();
-            let pool = db::connect(DB_PATH).await?;
+            check_db_exists();
+            let pool = db::connect(&db).await?;
             commands::new::new(cmd.clone(), &pool).await;
         }
         Some(Commands::Update(cmd)) => {
-            ensure_db_exists();
-            let pool = db::connect(DB_PATH).await?;
+            check_db_exists();
+            let pool = db::connect(&db).await?;
             commands::update::update(cmd.clone(), &pool).await;
         }
         Some(Commands::Delete(cmd)) => {
-            ensure_db_exists();
-            let pool = db::connect(DB_PATH).await?;
+            check_db_exists();
+            let pool = db::connect(&db).await?;
             commands::delete::delete(cmd.clone(), &pool).await;
         }
         Some(Commands::All(cmd)) => {
-            ensure_db_exists();
-            let pool = db::connect(DB_PATH).await?;
+            check_db_exists();
+            let pool = db::connect(&db).await?;
             commands::all::all(cmd.clone(), &pool).await;
         }
         Some(Commands::Get(cmd)) => {
-            ensure_db_exists();
-            let pool = db::connect(DB_PATH).await?;
+            check_db_exists();
+            let pool = db::connect(&db).await?;
             commands::get::get(cmd.clone(), &pool).await;
         }
         None => {}
@@ -48,9 +49,10 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn ensure_db_exists() {
-    if !db_exists() {
+fn check_db_exists() {
+    let db_path = get_db_path();
+    if !db_path.exists() {
         println!("Database not found. Run `create` first.");
-        std::process::exit(1);
+        std::process::exit(0);
     }
 }

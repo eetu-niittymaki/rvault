@@ -1,23 +1,23 @@
-use rpassword::read_password;
-use sqlx::Error;
-use sqlx::sqlite::SqlitePool;
-use std::io::{self, Write};
+use std::path::Path;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use sqlx::{SqlitePool, Error};
 use std::str::FromStr;
+use std::io::{self, Write};
+use rpassword::read_password;
 
-pub async fn connect(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
+pub async fn connect(db_path: &Path) -> Result<SqlitePool, Error> {
     let password = std::env::var("DB_PASSWORD").unwrap_or_else(|_| {
         print!("Enter database password: ");
         io::stdout().flush().unwrap();
         read_password().unwrap()
     });
 
-    let options = sqlx::sqlite::SqliteConnectOptions::from_str(&format!("sqlite://{}", db_path))
-        .unwrap()
+    let options = SqliteConnectOptions::from_str(db_path.to_str().unwrap())?
         .pragma("key", password.clone());
 
-    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+    let pool = SqlitePoolOptions::new()
         .max_connections(5)
-        .connect_with(options.clone())
+        .connect_with(options)
         .await?;
 
     match sqlx::query("SELECT count(*) FROM sqlite_master;")
@@ -28,10 +28,10 @@ pub async fn connect(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
         Err(e) => {
             if let Error::Database(db_err) = &e {
                 if db_err.message().contains("file is not a database") {
-                    println!("Incorrect password for database"); 
+                    println!("Incorrect password for database");
                 }
             }
-            Err(e) 
+            Err(e)
         }
     }
 }

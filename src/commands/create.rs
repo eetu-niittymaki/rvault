@@ -1,15 +1,16 @@
 use sqlx::{query, SqliteConnection, SqlitePool};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult,};
-use std::path::Path;
 use std::str::FromStr;
 use std::{fs, io, io::Write};
 use rpassword::read_password; 
 
-use crate::config::DB_PATH;
+use crate::config::get_db_path;
 
 pub async fn create() -> anyhow::Result<SqlitePool> {
+    let db_path = get_db_path();
+    
     // Check if DB exists
-    if Path::new(DB_PATH).exists() {
+    if db_path.exists() {
         println!("Database already exists. Delete and create new? [y/n]");
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
@@ -18,12 +19,12 @@ pub async fn create() -> anyhow::Result<SqlitePool> {
             std::process::exit(0);
         }
 
-        fs::remove_file(DB_PATH)?;
+        fs::remove_file(&db_path)?;
     }
 
     let password = prompt_password();
 
-    let opts = SqliteConnectOptions::from_str(DB_PATH)?
+    let opts = SqliteConnectOptions::from_str(db_path.to_str().unwrap())?
         .pragma("key", password)
         .create_if_missing(true);
 
