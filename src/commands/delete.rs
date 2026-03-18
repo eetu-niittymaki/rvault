@@ -1,4 +1,3 @@
-use sqlx::sqlite::{SqliteQueryResult};
 use sqlx::{SqliteConnection, query, SqlitePool};
 
 use crate::cli::DeleteCommand;
@@ -6,18 +5,24 @@ use crate::cli::DeleteCommand;
 async fn delete_password(
     conn: &mut SqliteConnection,
     name: String,
-) -> anyhow::Result<SqliteQueryResult> {
+) -> anyhow::Result<()> {
     let result = query(
         r#"
-        DELETE FROM  Passwords
+        DELETE FROM Passwords
         WHERE name = ?
-        "#,
+        "#
     )
-    .bind(name)
-    .execute(conn)  
+    .bind(&name)
+    .execute(conn)
     .await?;
 
-    Ok(result)
+    if result.rows_affected() > 0 {
+        println!("{} deleted successfully!", name);
+    } else {
+        println!("Password doesn't exist");
+    }
+
+    Ok(()) 
 }
 
 pub async fn delete(cmd: DeleteCommand, pool: &SqlitePool) {
@@ -29,14 +34,5 @@ pub async fn delete(cmd: DeleteCommand, pool: &SqlitePool) {
         }
     };
 
-    let delete = delete_password(&mut conn, cmd.name.clone()).await;
-
-    match delete {
-        Ok(_) => {
-            println!("{} deleted successfully!", cmd.name.clone())
-        }
-        Err(e) => {
-            println!("Error in deleting password: {}", e)
-        }
-    }
+    let _ = delete_password(&mut conn, cmd.name.clone()).await;
 }

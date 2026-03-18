@@ -49,8 +49,7 @@ pub struct DeleteCommand {
 }
 
 #[derive(Parser, Debug, Clone)]
-pub struct AllCommand {
-}
+pub struct AllCommand {}
 
 #[derive(Parser, Debug, Clone)]
 pub struct GetCommand {
