@@ -3,7 +3,6 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult,};
 use std::path::Path;
 use std::str::FromStr;
 use std::{fs, io, io::Write};
-
 use rpassword::read_password; 
 
 use crate::config::DB_PATH;

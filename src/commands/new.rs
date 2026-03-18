@@ -1,4 +1,3 @@
-use dotenv::dotenv;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{SqlitePool, query};
 use std::env;
@@ -7,9 +6,10 @@ use crate::cli::NewCommand;
 use crate::utils::password_gen::generate_password;
 use crate::crypto::secret_crypto::encrypt;
 
+include!(concat!(env!("OUT_DIR"), "/built_env.rs"));
+
 async fn new_password(pool: &SqlitePool, name: String) -> anyhow::Result<SqliteQueryResult> {
-    dotenv().ok();
-    let master_pass = env::var("MASTER_PASSWORD").expect("MASTER_PASSWORD not set");
+    let master_pass = MASTER_PASSWORD;
     let password = generate_password();
 
     let result = query(
@@ -19,7 +19,7 @@ async fn new_password(pool: &SqlitePool, name: String) -> anyhow::Result<SqliteQ
         "#,
     )
     .bind(name)
-    .bind(encrypt(&password, master_pass))
+    .bind(encrypt(&password, master_pass.to_string()))
     .execute(pool)
     .await?;
 

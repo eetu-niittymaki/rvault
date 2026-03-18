@@ -1,5 +1,6 @@
 use rpassword::read_password;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
+use sqlx::Error;
+use sqlx::sqlite::SqlitePool;
 use std::io::{self, Write};
 use std::str::FromStr;
 
@@ -10,17 +11,27 @@ pub async fn connect(db_path: &str) -> Result<SqlitePool, sqlx::Error> {
         read_password().unwrap()
     });
 
-    let options = SqliteConnectOptions::from_str(&format!("sqlite://{}", db_path))?
+    let options = sqlx::sqlite::SqliteConnectOptions::from_str(&format!("sqlite://{}", db_path))
+        .unwrap()
         .pragma("key", password.clone());
 
-    let pool = SqlitePoolOptions::new()
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(5)
-        .connect_with(options)
+        .connect_with(options.clone())
         .await?;
 
-    sqlx::query("SELECT count(*) FROM sqlite_master;")
+    match sqlx::query("SELECT count(*) FROM sqlite_master;")
         .fetch_one(&pool)
-        .await?;
-
-    Ok(pool)
+        .await
+    {
+        Ok(_) => Ok(pool),
+        Err(e) => {
+            if let Error::Database(db_err) = &e {
+                if db_err.message().contains("file is not a database") {
+                    println!("Incorrect password for database"); 
+                }
+            }
+            Err(e) 
+        }
+    }
 }

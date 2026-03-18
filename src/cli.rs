@@ -11,11 +11,17 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    /// Creates the database
     Create(CreateCommand),
+    /// Add new password to database
     New(NewCommand),
+    /// Change name of saved password
     Update(UpdateCommand),
+    /// Delete saved password
     Delete(DeleteCommand),
+    /// Get names of all saved passwords
     All(AllCommand),
+    /// Get specific password by name and save it to clipboard
     Get(GetCommand)
 }
 
