@@ -1,5 +1,4 @@
-use sqlx::sqlite::SqliteQueryResult;
-use sqlx::{SqliteConnection, query, SqlitePool};
+use sqlx::{SqliteConnection, SqlitePool, query};
 
 use crate::cli::UpdateCommand;
 
@@ -7,7 +6,7 @@ async fn update_password(
     conn: &mut SqliteConnection,
     old_name: String,
     new_name: String,
-) -> anyhow::Result<SqliteQueryResult> {
+) -> anyhow::Result<()> {
     let result = query(
         r#"
         UPDATE Passwords
@@ -15,12 +14,18 @@ async fn update_password(
         WHERE name = ?;
         "#,
     )
-    .bind(new_name)
-    .bind(old_name)
-    .execute(conn)  
+    .bind(&new_name)
+    .bind(&old_name)
+    .execute(conn)
     .await?;
 
-    Ok(result)
+    if result.rows_affected() > 0 {
+        println!("{} updated to: {}", old_name, new_name);
+    } else {
+        println!("Password doesn't exist");
+    }
+
+    Ok(())
 }
 
 pub async fn update(cmd: UpdateCommand, pool: &SqlitePool) {
@@ -32,21 +37,5 @@ pub async fn update(cmd: UpdateCommand, pool: &SqlitePool) {
         }
     };
 
-    let result = update_password(
-        &mut conn, 
-        cmd.old_name.clone(), 
-        cmd.new_name.clone(),
-    ).await;
-
-    match result {
-        Ok(_) => {
-            println!(
-                "{} updated to: {} successfully!",
-                cmd.old_name, cmd.new_name
-            );
-        }
-        Err(e) => {
-            println!("Error updating password: {}", e);
-        }
-    }
+    let _ = update_password(&mut conn, cmd.old_name.clone(), cmd.new_name.clone()).await;
 }
