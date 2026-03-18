@@ -45,9 +45,9 @@ pub async fn get(cmd: GetCommand, pool: &SqlitePool) {
             let decrypt_pass = decrypt(&password, master_pass.to_string());
             let copy_to_clipboard = copy_to_clipboard(decrypt_pass.unwrap());
             if copy_to_clipboard {
-                println!("{} copied to clipboard succesfully!", cmd.name.clone())
+                println!("{} copied to clipboard succesfully", cmd.name.clone())
             } else {
-                println!("Error in copying to clipboard!")
+                println!("Error in copying to clipboard")
             }
         }
         Ok(None) => {

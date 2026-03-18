@@ -4,13 +4,13 @@ use std::env;
 
 use crate::cli::NewCommand;
 use crate::utils::password_gen::generate_password;
+use crate::utils::copy_to_clipboard::copy_to_clipboard;
 use crate::crypto::secret_crypto::encrypt;
 
 include!(concat!(env!("OUT_DIR"), "/built_env.rs"));
 
-async fn new_password(pool: &SqlitePool, name: String) -> anyhow::Result<SqliteQueryResult> {
+async fn new_password(pool: &SqlitePool, name: String, password: String) -> anyhow::Result<SqliteQueryResult> {
     let master_pass = MASTER_PASSWORD;
-    let password = generate_password();
 
     let result = query(
         r#"
@@ -27,9 +27,18 @@ async fn new_password(pool: &SqlitePool, name: String) -> anyhow::Result<SqliteQ
 }
 
 pub async fn new(cmd: NewCommand, pool: &SqlitePool) {
-    match new_password(pool, cmd.name.clone()).await {
+    let password = generate_password();
+    match new_password(pool, cmd.name.clone(), password.clone()).await {
         Ok(_) => {
-            println!("{} added successfully!", cmd.name);
+            println!("{} added successfully", cmd.name);
+            if cmd.copy { // Ih optional copy flag given
+                let copy_to_clipboard = copy_to_clipboard(password);
+                if copy_to_clipboard {
+                    println!("{} copied to clipboard", cmd.name.clone())
+                } else {
+                    println!("Error in copying to clipboard!")
+                }
+            }
         }
         Err(e) => {
             if let Some(sqlx::Error::Database(db_err)) = e.downcast_ref::<sqlx::Error>() {

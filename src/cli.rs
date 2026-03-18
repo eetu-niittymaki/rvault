@@ -33,6 +33,8 @@ pub struct CreateCommand {
 pub struct NewCommand {
     #[arg(short, long, help="Name for password to create")]
     pub name: String,
+    #[arg(short='c', long, help="Give flag to copy password to clipboard")]
+    pub copy: bool,
 }
 
 #[derive(Parser, Debug, Clone)]pub struct UpdateCommand {
