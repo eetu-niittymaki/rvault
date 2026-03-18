@@ -3,7 +3,6 @@ use sqlx::sqlite::SqliteRow;
 
 use crate::cli::AllCommand;
 
-
 async fn get_all(pool: &SqlitePool) -> anyhow::Result<Vec<SqliteRow>> {
     let results = query("SELECT * FROM Passwords;")
         .fetch_all(pool)

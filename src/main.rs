@@ -43,6 +43,9 @@ async fn main() -> anyhow::Result<()> {
             let pool = db::connect(&db).await?;
             commands::get::get(cmd.clone(), &pool).await;
         }
+        Some(Commands::Version) => {
+            commands::version::version().await;
+        }
         None => {}
     }
 
