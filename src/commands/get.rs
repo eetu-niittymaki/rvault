@@ -5,6 +5,7 @@ use std::env;
 
 use crate::cli::GetCommand;
 use crate::crypto::secret_crypto::decrypt;
+use crate::utils::copy_to_clipboard::copy_to_clipboard;
 
 async fn get_password(
     conn: &mut SqliteConnection,
@@ -27,7 +28,7 @@ async fn get_password(
 
 pub async fn get(cmd: GetCommand, pool: &SqlitePool) {
     dotenv().ok();
-    let master_pass = env::var("MASTER_PASSWORD").expect("API_KEY must be set");
+    let master_pass = env::var("MASTER_PASSWORD").expect("MASTER_PASSWORD not set");
 
     let mut conn = match pool.acquire().await {
         Ok(conn) => conn,
@@ -41,7 +42,13 @@ pub async fn get(cmd: GetCommand, pool: &SqlitePool) {
 
     match get {
         Ok(Some(password)) => {
-            println!("Password: {:?}", decrypt(&password, master_pass));
+            let decrypt_pass = decrypt(&password, master_pass);
+            let copy_to_clipboard = copy_to_clipboard(decrypt_pass.unwrap());
+            if copy_to_clipboard {
+                println!("{} copied to clipboard succesfully!", cmd.name.clone())
+            } else {
+                println!("Error in copying to clipboard!")
+            }
         }
         Ok(None) => {
             println!("No password found for service '{}'", cmd.name);

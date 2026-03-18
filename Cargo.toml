@@ -16,6 +16,8 @@ libsqlite3-sys = { version = "0.30.1", features = [
 ] }
 base64 = "0.22.1"
 dotenv = "0.15"
+rand = "0.10.0"
+cli-clipboard = "0.4.0"
 
 
 [dependencies.sqlx]

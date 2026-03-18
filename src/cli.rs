@@ -27,8 +27,6 @@ pub struct CreateCommand {
 pub struct NewCommand {
     #[arg(short, long, help="Name for password to create")]
     pub name: String,
-    #[arg(short, long, help="Password")]
-    pub word: String
 }
 
 #[derive(Parser, Debug, Clone)]pub struct UpdateCommand {

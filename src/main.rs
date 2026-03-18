@@ -7,6 +7,7 @@ mod commands;
 mod config;
 mod db;
 mod crypto;
+mod utils;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -15,7 +16,6 @@ async fn main() -> anyhow::Result<()> {
     match &cli.command {
         Some(Commands::Create(_)) => {
             let _pool = commands::create::create().await?;
-            println!("Database ready.");
         }
         Some(Commands::New(cmd)) => {
             ensure_db_exists();

@@ -60,7 +60,7 @@ async fn create_table(conn: &mut SqliteConnection) -> anyhow::Result<SqliteQuery
         CREATE TABLE IF NOT EXISTS Passwords(
             id       INTEGER PRIMARY KEY NOT NULL,
             name     TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL UNIQUE
+            password TEXT NOT NULL
         );
         "#
     )
