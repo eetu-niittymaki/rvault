@@ -23,7 +23,7 @@ pub enum Commands {
     All(AllCommand),
     /// Get specific password by name and save it to clipboard
     Get(GetCommand),
-    /// Prints the program version number
+    /// Prints the programs version number
     Version
 }
 

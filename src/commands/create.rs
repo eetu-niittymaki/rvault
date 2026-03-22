@@ -9,15 +9,24 @@ use crate::config::get_db_path;
 pub async fn create() -> anyhow::Result<SqlitePool> {
     let db_path = get_db_path();
     
-    // Check if DB exists
+    // Check if DB exists, ask to delete if does
     if db_path.exists() {
-        println!("Database already exists. Delete and create new? [y/n]");
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-        if !matches!(input.trim().to_lowercase().as_str(), "y" | "yes") {
-            println!("Database creation cancelled.");
+        let mut delete = String::new();
+        let mut confirm_delete = String::new();
+
+        println!("Database already exists. Delete and create new database? [y/n]");
+        io::stdin().read_line(&mut delete)?;
+        if !matches!(delete.trim().to_lowercase().as_str(), "y" | "yes") {
+            println!("Database creation cancelled");
             std::process::exit(0);
-        }
+        } 
+
+        println!("Confirm database deletion: [y/n]");
+        io::stdin().read_line(&mut confirm_delete)?;
+        if !matches!(confirm_delete.trim().to_lowercase().as_str(), "y" | "yes") {
+            println!("Database creation cancelled");
+            std::process::exit(0);
+        } 
 
         fs::remove_file(&db_path)?;
     }
