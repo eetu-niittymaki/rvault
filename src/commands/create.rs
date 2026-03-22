@@ -4,6 +4,7 @@ use std::str::FromStr;
 use std::{fs, io, io::Write};
 use rpassword::read_password; 
 
+use crate::db::connect; 
 use crate::config::get_db_path;
 
 pub async fn create() -> anyhow::Result<SqlitePool> {
@@ -11,6 +12,11 @@ pub async fn create() -> anyhow::Result<SqlitePool> {
     
     // Check if DB exists, ask to delete if does
     if db_path.exists() {
+        if let Err(_) = connect(&db_path).await {
+            println!("Authentication failed. Cannot delete database.");
+            std::process::exit(1);
+        }
+
         let mut delete = String::new();
         let mut confirm_delete = String::new();
 
@@ -47,7 +53,7 @@ pub async fn create() -> anyhow::Result<SqlitePool> {
 }
 
 fn prompt_password() -> String {
-    print!("Enter database password: ");
+    print!("Enter password to use with database: ");
     io::stdout().flush().unwrap();
     let password = read_password().unwrap();
 

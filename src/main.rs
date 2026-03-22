@@ -12,7 +12,7 @@ mod utils;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let db = get_db_path();
+    let db_path = get_db_path();
 
     match &cli.command {
         Some(Commands::Create(_)) => {
@@ -20,27 +20,27 @@ async fn main() -> anyhow::Result<()> {
         }
         Some(Commands::New(cmd)) => {
             check_db_exists();
-            let pool = db::connect(&db).await?;
+            let pool = db::connect(&db_path).await?;
             commands::new::new(cmd.clone(), &pool).await;
         }
         Some(Commands::Update(cmd)) => {
             check_db_exists();
-            let pool = db::connect(&db).await?;
+            let pool = db::connect(&db_path).await?;
             commands::update::update(cmd.clone(), &pool).await;
         }
         Some(Commands::Delete(cmd)) => {
             check_db_exists();
-            let pool = db::connect(&db).await?;
+            let pool = db::connect(&db_path).await?;
             commands::delete::delete(cmd.clone(), &pool).await;
         }
         Some(Commands::All(cmd)) => {
             check_db_exists();
-            let pool = db::connect(&db).await?;
+            let pool = db::connect(&db_path).await?;
             commands::all::all(cmd.clone(), &pool).await;
         }
         Some(Commands::Get(cmd)) => {
             check_db_exists();
-            let pool = db::connect(&db).await?;
+            let pool = db::connect(&db_path).await?;
             commands::get::get(cmd.clone(), &pool).await;
         }
         Some(Commands::Version) => {
