@@ -23,13 +23,14 @@ pub enum Commands {
     All(AllCommand),
     /// Get specific password by name and save it to clipboard
     Get(GetCommand),
+    /// Just generates a password, without saving it to database
+    Pass(PassCommand),
     /// Prints the programs version number
     Version
 }
 
 #[derive(Parser, Debug, Clone)]
-pub struct CreateCommand {
-}
+pub struct CreateCommand {}
 
 #[derive(Parser, Debug, Clone)]
 pub struct NewCommand {
@@ -39,7 +40,8 @@ pub struct NewCommand {
     pub copy: bool,
 }
 
-#[derive(Parser, Debug, Clone)]pub struct UpdateCommand {
+#[derive(Parser, Debug, Clone)]
+pub struct UpdateCommand {
     #[arg(short, long, help="Name for password to change")]
     pub old_name: String,
     #[arg(short, long, help="Name password is changed to")]
@@ -59,4 +61,10 @@ pub struct AllCommand {}
 pub struct GetCommand {
     #[arg(short, long, help="Name for password to get")]
     pub name: String,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct PassCommand {
+    #[arg(short='c', long, help="Give flag to copy password to clipboard")]
+    pub copy: bool,
 }
